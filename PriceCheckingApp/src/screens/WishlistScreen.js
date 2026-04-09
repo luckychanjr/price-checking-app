@@ -7,12 +7,13 @@ export default function WishlistScreen({ navigation }) {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    loadItems();
+    // For now, just load from local storage
+    loadItemsLocal();
   }, []);
 
-  const loadItems = async () => {
-    const data = await getWishlist();
-    setItems(data);
+  const loadItemsLocal = async () => {
+    const localData = await AsyncStorage.getItem('wishlist');
+    setItems(localData ? JSON.parse(localData) : []);
   };
 
   return (
