@@ -24,6 +24,7 @@ const normalizeItem = (item, fallback = {}) => {
       fallback.name ??
       fallback.input ??
       'Unknown Item',
+    image: item?.image ?? firstOffer?.image ?? fallback.image ?? '',
     url: item?.url ?? firstOffer?.url ?? fallback.url ?? '',
     lowestPrice: Number(
       item?.lowestPrice ??

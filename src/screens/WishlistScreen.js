@@ -1,26 +1,61 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, Button, ActivityIndicator, Text, Alert } from 'react-native';
-import { deleteItem, getWishlist, refreshItem } from '../services/api';
+import {
+  View,
+  FlatList,
+  Button,
+  ActivityIndicator,
+  Text,
+  Alert,
+  TextInput,
+  Pressable,
+  StyleSheet,
+} from 'react-native';
+import { addItem, deleteItem, getWishlist, refreshItem } from '../services/api';
 import ItemCard from '../components/ItemCard';
 
-export default function WishlistScreen({ navigation }) {
+export default function WishlistScreen() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingItemId, setDeletingItemId] = useState(null);
   const [refreshingItemId, setRefreshingItemId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [input, setInput] = useState('');
+  const [activeSection, setActiveSection] = useState('wishlist');
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', loadItems);
     loadItems();
-
-    return unsubscribe;
-  }, [navigation]);
+  }, []);
 
   const loadItems = async () => {
     setLoading(true);
     const wishlistItems = await getWishlist();
     setItems(wishlistItems);
     setLoading(false);
+  };
+
+  const handleAdd = async () => {
+    const trimmedInput = input.trim();
+
+    if (!trimmedInput) {
+      Alert.alert('Missing Input', 'Please enter a product query or paste a product URL.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const newItem = await addItem(trimmedInput);
+      setItems((currentItems) => [
+        newItem,
+        ...currentItems.filter((currentItem) => currentItem.itemId !== newItem.itemId),
+      ]);
+      setInput('');
+      setActiveSection('wishlist');
+      Alert.alert('Success', 'Item added to your wishlist.');
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to add item');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDelete = (item) => {
@@ -70,25 +105,146 @@ export default function WishlistScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, padding: 10 }}>
-      <Button title="Add Item" onPress={() => navigation.navigate('Add Item')} />
-      {loading ? <ActivityIndicator style={{ marginTop: 20 }} /> : null}
-      {!loading && items.length === 0 ? (
-        <Text style={{ marginTop: 20 }}>No wishlist items yet.</Text>
-      ) : null}
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.itemId}
-        renderItem={({ item }) => (
-          <ItemCard
-            item={item}
-            refreshing={refreshingItemId === item.itemId}
-            deleting={deletingItemId === item.itemId}
-            onRefresh={() => handleRefresh(item)}
-            onDelete={() => handleDelete(item)}
+    <View style={styles.container}>
+      <Text style={styles.title}>Wishlist Price Comparison</Text>
+      <View style={styles.sectionBar}>
+        <Pressable
+          style={[
+            styles.sectionButton,
+            activeSection === 'add' ? styles.sectionButtonActive : null,
+          ]}
+          onPress={() => setActiveSection('add')}
+        >
+          <Text
+            style={[
+              styles.sectionButtonText,
+              activeSection === 'add' ? styles.sectionButtonTextActive : null,
+            ]}
+          >
+            Add Item
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.sectionButton,
+            activeSection === 'wishlist' ? styles.sectionButtonActive : null,
+          ]}
+          onPress={() => {
+            setActiveSection('wishlist');
+            loadItems();
+          }}
+        >
+          <Text
+            style={[
+              styles.sectionButtonText,
+              activeSection === 'wishlist' ? styles.sectionButtonTextActive : null,
+            ]}
+          >
+            Wishlist
+          </Text>
+        </Pressable>
+      </View>
+
+      {activeSection === 'add' ? (
+        <View style={styles.panel}>
+          <Text style={styles.panelTitle}>Add a product</Text>
+          <TextInput
+            placeholder='Paste a URL or type a query like "ipad pro"'
+            value={input}
+            onChangeText={setInput}
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={styles.input}
           />
-        )}
-      />
+          <Button
+            title={submitting ? 'Submitting...' : 'Submit'}
+            onPress={handleAdd}
+            disabled={submitting}
+          />
+        </View>
+      ) : (
+        <View style={styles.panel}>
+          {loading ? <ActivityIndicator style={styles.statusSpacing} /> : null}
+          {!loading && items.length === 0 ? (
+            <Text style={styles.emptyText}>No wishlist items yet.</Text>
+          ) : null}
+          <FlatList
+            data={items}
+            keyExtractor={(item) => item.itemId}
+            renderItem={({ item }) => (
+              <ItemCard
+                item={item}
+                refreshing={refreshingItemId === item.itemId}
+                deleting={deletingItemId === item.itemId}
+                onRefresh={() => handleRefresh(item)}
+                onDelete={() => handleDelete(item)}
+              />
+            )}
+          />
+        </View>
+      )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#f8fafc',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  sectionBar: {
+    flexDirection: 'row',
+    backgroundColor: '#e5e7eb',
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 16,
+  },
+  sectionButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  sectionButtonActive: {
+    backgroundColor: '#2563eb',
+  },
+  sectionButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  sectionButtonTextActive: {
+    color: '#ffffff',
+  },
+  panel: {
+    flex: 1,
+  },
+  panelTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: '#ffffff',
+  },
+  statusSpacing: {
+    marginTop: 20,
+  },
+  emptyText: {
+    marginTop: 20,
+    color: '#6b7280',
+  },
+});
