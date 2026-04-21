@@ -107,9 +107,53 @@ const normalizeWishlistResponse = (data) => {
   return [];
 };
 
-export const addItem = async (input) => {
+const saveWishlistItemLocally = async (rawItem, fallback = {}) => {
+  const newItem = normalizeItem(rawItem, fallback);
+  const items = await readWishlist();
+  const nextItems = [newItem, ...items.filter((item) => item.itemId !== newItem.itemId)];
+  await saveWishlist(nextItems);
+  return newItem;
+};
+
+export const searchItems = async (input) => {
   const trimmedInput = input.trim();
   const payload = buildAddItemPayload(trimmedInput);
+
+  const res = await fetch(API_ENDPOINTS.searchItems, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await parseJson(res);
+  ensureOk(res, data);
+
+  if (!Array.isArray(data?.items)) {
+    return [];
+  }
+
+  return data.items.map((item, index) => ({
+    ...normalizeItem(item, {
+      itemId: `${item?.title ?? item?.name ?? 'result'}-${index}`,
+      input: trimmedInput,
+      image: item?.image ?? item?.offers?.[0]?.image ?? '',
+      url: item?.url ?? item?.offers?.[0]?.url ?? '',
+    }),
+    offers: Array.isArray(item?.offers) ? item.offers : [],
+    sourceInput: item?.sourceInput ?? trimmedInput,
+    raw: item,
+  }));
+};
+
+export const addItem = async (inputOrProduct) => {
+  const isSelectedProduct =
+    typeof inputOrProduct === 'object' && inputOrProduct !== null && !Array.isArray(inputOrProduct);
+
+  const payload = isSelectedProduct
+    ? { selectedProduct: inputOrProduct.raw ?? inputOrProduct }
+    : buildAddItemPayload(inputOrProduct.trim());
 
   const res = await fetch(API_ENDPOINTS.addItem, {
     method: 'POST',
@@ -122,15 +166,12 @@ export const addItem = async (input) => {
   const data = await parseJson(res);
   ensureOk(res, data);
 
-  const newItem = normalizeItem(data, {
-    input: trimmedInput,
-    url: payload.url ?? '',
+  return saveWishlistItemLocally(data, {
+    input: typeof inputOrProduct === 'string' ? inputOrProduct.trim() : inputOrProduct?.name ?? '',
+    url: payload.url ?? inputOrProduct?.url ?? '',
+    image: inputOrProduct?.image ?? '',
     lastUpdated: new Date().toISOString(),
   });
-  const items = await readWishlist();
-  const nextItems = [newItem, ...items.filter((item) => item.itemId !== newItem.itemId)];
-  await saveWishlist(nextItems);
-  return newItem;
 };
 
 export const getWishlist = async () => {

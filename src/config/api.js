@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 const MANUAL_API_BASE_URL = 'https://ooqbjz3cq6.execute-api.us-east-1.amazonaws.com/dev';
 const MANUAL_ADD_ITEM_PATH = '/wishlist';
 const MANUAL_GET_WISHLIST_PATH = '/wishlist';
+const MANUAL_SEARCH_ITEMS_PATH = '/wishlist/search';
 const DEFAULT_DEV_PORT = 8000;
 
 const defaultDevHost = Platform.select({
@@ -31,4 +32,5 @@ export const API_BASE_URL =
 export const API_ENDPOINTS = {
   addItem: joinUrl(API_BASE_URL, MANUAL_ADD_ITEM_PATH),
   wishlist: joinUrl(API_BASE_URL, MANUAL_GET_WISHLIST_PATH),
+  searchItems: joinUrl(API_BASE_URL, MANUAL_SEARCH_ITEMS_PATH),
 };

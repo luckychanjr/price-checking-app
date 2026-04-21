@@ -3,8 +3,10 @@ import { View, Text, Button, Image, StyleSheet } from 'react-native';
 
 export default function ItemCard({
   item,
+  onAdd,
   onRefresh,
   onDelete,
+  adding = false,
   refreshing = false,
   deleting = false,
 }) {
@@ -28,20 +30,28 @@ export default function ItemCard({
         </View>
       </View>
       <View style={styles.actions}>
-        <View style={styles.actionButton}>
-          <Button
-            title={refreshing ? 'Refreshing...' : 'Refresh'}
-            onPress={onRefresh}
-            disabled={refreshing || deleting}
-          />
-        </View>
-        <View style={styles.actionButton}>
-          <Button
-            title={deleting ? 'Removing...' : 'Remove'}
-            onPress={onDelete}
-            disabled={refreshing || deleting}
-          />
-        </View>
+        {onAdd ? (
+          <View style={styles.actionButtonSingle}>
+            <Button title={adding ? 'Adding...' : 'Add Item'} onPress={onAdd} disabled={adding} />
+          </View>
+        ) : (
+          <>
+            <View style={styles.actionButton}>
+              <Button
+                title={refreshing ? 'Refreshing...' : 'Refresh'}
+                onPress={onRefresh}
+                disabled={refreshing || deleting}
+              />
+            </View>
+            <View style={styles.actionButton}>
+              <Button
+                title={deleting ? 'Removing...' : 'Remove'}
+                onPress={onDelete}
+                disabled={refreshing || deleting}
+              />
+            </View>
+          </>
+        )}
       </View>
     </View>
   );
@@ -106,5 +116,8 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     marginRight: 8,
+  },
+  actionButtonSingle: {
+    flex: 1,
   },
 });

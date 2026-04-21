@@ -10,7 +10,7 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
-import { addItem, deleteItem, getWishlist, refreshItem } from '../services/api';
+import { addItem, deleteItem, getWishlist, refreshItem, searchItems } from '../services/api';
 import ItemCard from '../components/ItemCard';
 
 export default function WishlistScreen() {
@@ -18,8 +18,11 @@ export default function WishlistScreen() {
   const [loading, setLoading] = useState(true);
   const [deletingItemId, setDeletingItemId] = useState(null);
   const [refreshingItemId, setRefreshingItemId] = useState(null);
+  const [addingResultKey, setAddingResultKey] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [input, setInput] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searched, setSearched] = useState(false);
   const [activeSection, setActiveSection] = useState('wishlist');
 
   useEffect(() => {
@@ -33,7 +36,7 @@ export default function WishlistScreen() {
     setLoading(false);
   };
 
-  const handleAdd = async () => {
+  const handleSearch = async () => {
     const trimmedInput = input.trim();
 
     if (!trimmedInput) {
@@ -43,18 +46,33 @@ export default function WishlistScreen() {
 
     try {
       setSubmitting(true);
-      const newItem = await addItem(trimmedInput);
+      const results = await searchItems(trimmedInput);
+      setSearchResults(results);
+      setSearched(true);
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to search for items');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAddSearchResult = async (result) => {
+    try {
+      setAddingResultKey(result.itemId);
+      const newItem = await addItem(result);
       setItems((currentItems) => [
         newItem,
         ...currentItems.filter((currentItem) => currentItem.itemId !== newItem.itemId),
       ]);
       setInput('');
+      setSearchResults([]);
+      setSearched(false);
       setActiveSection('wishlist');
       Alert.alert('Success', 'Item added to your wishlist.');
     } catch (err) {
       Alert.alert('Error', err.message || 'Failed to add item');
     } finally {
-      setSubmitting(false);
+      setAddingResultKey(null);
     }
   };
 
@@ -157,9 +175,23 @@ export default function WishlistScreen() {
             style={styles.input}
           />
           <Button
-            title={submitting ? 'Submitting...' : 'Submit'}
-            onPress={handleAdd}
+            title={submitting ? 'Searching...' : 'Search'}
+            onPress={handleSearch}
             disabled={submitting}
+          />
+          {searched && searchResults.length === 0 ? (
+            <Text style={styles.emptyText}>No matching products found.</Text>
+          ) : null}
+          <FlatList
+            data={searchResults}
+            keyExtractor={(item, index) => `${item.itemId}-${index}`}
+            renderItem={({ item }) => (
+              <ItemCard
+                item={item}
+                adding={addingResultKey === item.itemId}
+                onAdd={() => handleAddSearchResult(item)}
+              />
+            )}
           />
         </View>
       ) : (
