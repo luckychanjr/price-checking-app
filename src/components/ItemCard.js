@@ -27,6 +27,9 @@ export default function ItemCard({
           <Text style={styles.meta}>Best Price: ${item.lowestPrice.toFixed(2)}</Text>
           <Text style={styles.meta}>Retailer: {item.cheapestRetailer}</Text>
           <Text style={styles.meta}>Updated: {item.lastUpdated}</Text>
+          {refreshing ? (
+            <Text style={styles.refreshStatus}>Fetching new price...</Text>
+          ) : null}
         </View>
       </View>
       <View style={styles.actions}>
@@ -38,7 +41,7 @@ export default function ItemCard({
           <>
             <View style={styles.actionButton}>
               <Button
-                title={refreshing ? 'Refreshing...' : 'Refresh'}
+                title={refreshing ? 'Fetching Price...' : 'Refresh'}
                 onPress={onRefresh}
                 disabled={refreshing || deleting}
               />
@@ -108,6 +111,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#4b5563',
     marginBottom: 4,
+  },
+  refreshStatus: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2563eb',
+    marginTop: 4,
   },
   actions: {
     flexDirection: 'row',

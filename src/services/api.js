@@ -49,6 +49,44 @@ const normalizeItem = (item, fallback = {}) => {
   };
 };
 
+const hasMeaningfulText = (value) =>
+  typeof value === 'string' && value.trim() !== '' && value.trim().toLowerCase() !== 'unknown item';
+
+const mergeRefreshedItem = (existingItem, refreshedData) => {
+  const firstOffer = Array.isArray(refreshedData?.offers) ? refreshedData.offers.find(Boolean) : null;
+  const refreshedPrice = Number(
+    refreshedData?.lowestPrice ??
+      refreshedData?.cheapestPrice ??
+      refreshedData?.price ??
+      firstOffer?.price ??
+      existingItem?.lowestPrice ??
+      0,
+  );
+
+  return {
+    ...existingItem,
+    itemId: String(refreshedData?.itemId ?? refreshedData?.id ?? existingItem?.itemId ?? Date.now()),
+    name: hasMeaningfulText(refreshedData?.name)
+      ? refreshedData.name
+      : hasMeaningfulText(refreshedData?.title)
+        ? refreshedData.title
+        : existingItem?.name ?? 'Unknown Item',
+    image: refreshedData?.image ?? existingItem?.image ?? '',
+    url: refreshedData?.url ?? existingItem?.url ?? '',
+    lowestPrice: refreshedPrice,
+    cheapestRetailer:
+      refreshedData?.cheapestRetailer ??
+      refreshedData?.retailer ??
+      firstOffer?.retailer ??
+      existingItem?.cheapestRetailer ??
+      'Unknown',
+    lastUpdated:
+      refreshedData?.lastUpdated ??
+      refreshedData?.updatedAt ??
+      new Date().toISOString(),
+  };
+};
+
 const buildAddItemPayload = (input) => {
   if (isUrlInput(input)) {
     return { url: input };
@@ -204,7 +242,10 @@ export const deleteItem = async (itemId) => {
   return data ?? { success: true, itemId };
 };
 
-export const refreshItem = async (itemId) => {
+export const refreshItem = async (itemOrId) => {
+  const existingItem =
+    typeof itemOrId === 'object' && itemOrId !== null ? itemOrId : null;
+  const itemId = existingItem?.itemId ?? itemOrId;
   const res = await fetch(
     `${API_ENDPOINTS.wishlist}/${encodeURIComponent(itemId)}/refresh`,
     {
@@ -215,7 +256,9 @@ export const refreshItem = async (itemId) => {
   const data = await parseJson(res);
   ensureOk(res, data);
 
-  const refreshedItem = normalizeItem(data, { itemId });
+  const refreshedItem = existingItem
+    ? mergeRefreshedItem(existingItem, data)
+    : normalizeItem(data, { itemId });
   const items = await readWishlist();
   const nextItems = items.map((item) =>
     item.itemId === itemId ? refreshedItem : item,

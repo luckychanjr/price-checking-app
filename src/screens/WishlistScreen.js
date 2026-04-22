@@ -109,7 +109,7 @@ export default function WishlistScreen() {
   const handleRefresh = async (item) => {
     try {
       setRefreshingItemId(item.itemId);
-      const refreshedItem = await refreshItem(item.itemId);
+      const refreshedItem = await refreshItem(item);
       setItems((currentItems) =>
         currentItems.map((currentItem) =>
           currentItem.itemId === item.itemId ? refreshedItem : currentItem,
