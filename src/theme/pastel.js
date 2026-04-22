@@ -50,15 +50,6 @@ const retailerThemes = [
       buttonTone: 'warm',
     },
   },
-  {
-    matchers: ['ebay'],
-    colors: {
-      tint: '#edf8f1',
-      border: '#b9dfc6',
-      text: '#3e8164',
-      buttonTone: 'mint',
-    },
-  },
 ];
 
 const defaultRetailerTheme = {
