@@ -1,18 +1,52 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import AddItemScreen from './src/screens/AddItemScreen';
-import WishlistScreen from './src/screens/WishlistScreen';
+import ProductDetailsScreen from './screens/ProductDetailsScreen';
+import WishlistScreen from './screens/WishlistScreen';
+import { pastelTheme } from './theme/pastel';
 
 const Stack = createNativeStackNavigator();
+const navigationTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: pastelTheme.accentDeep,
+    background: pastelTheme.background,
+    card: pastelTheme.surface,
+    text: pastelTheme.heading,
+    border: pastelTheme.border,
+  },
+};
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Wishlist" component={WishlistScreen} />
-        <Stack.Screen name="Add Item" component={AddItemScreen} />
+    <NavigationContainer theme={navigationTheme}>
+      <Stack.Navigator
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: pastelTheme.surface,
+          },
+          headerShadowVisible: false,
+          headerTintColor: pastelTheme.heading,
+          headerTitleStyle: {
+            fontWeight: '700',
+          },
+          contentStyle: {
+            backgroundColor: pastelTheme.background,
+          },
+        }}
+      >
+        <Stack.Screen
+          name="Wishlist"
+          component={WishlistScreen}
+          options={{ title: 'Pastel Price Pal' }}
+        />
+        <Stack.Screen
+          name="Product Details"
+          component={ProductDetailsScreen}
+          options={{ title: 'Retailer Comparison' }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

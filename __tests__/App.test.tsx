@@ -7,6 +7,16 @@ import ReactTestRenderer from 'react-test-renderer';
 
 jest.mock('@react-navigation/native', () => ({
   NavigationContainer: ({children}: {children: React.ReactNode}) => children,
+  DefaultTheme: {
+    colors: {
+      primary: '#000000',
+      background: '#ffffff',
+      card: '#ffffff',
+      text: '#000000',
+      border: '#dddddd',
+      notification: '#000000',
+    },
+  },
 }));
 
 jest.mock('@react-navigation/native-stack', () => ({
