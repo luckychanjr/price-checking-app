@@ -197,10 +197,11 @@ export default function WishlistScreen({ navigation }) {
             <Text style={styles.panelEyebrow}>Fresh finds</Text>
             <Text style={styles.panelTitle}>Add a product to your pastel shelf</Text>
             <Text style={styles.panelDescription}>
-              Paste a product URL or type a product query like "ipad pro" to find grouped matches.
+              Search terms look for grouped retailer matches. Pasting a product URL imports that
+              source item first, then tries to find comparable offers at the retailers we support.
             </Text>
             <TextInput
-              placeholder='Paste a URL or type a query like "ipad pro"'
+              placeholder='Type "ipad pro" to search or paste a product URL to import that item'
               placeholderTextColor={pastelTheme.muted}
               value={input}
               onChangeText={setInput}
